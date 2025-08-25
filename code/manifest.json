@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Adultization Identifier for Instagram",
+  "version": "1.0",
+  "description": "Aplica um desfoque a posts do Instagram que potencialmente possuem conteúdo de sexualização infantil.",
+  "content_scripts": [
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["contentScript.js"]
+    }
+  ]
+}
