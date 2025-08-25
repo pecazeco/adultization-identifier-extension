@@ -8,5 +8,11 @@
       "matches": ["*://*.instagram.com/*"],
       "js": ["contentScript.js"]
     }
+  ],
+  "web_accessible_resources": [
+    { 
+      "resources": ["images/warning-sign.png"],
+      "matches": ["*://*.instagram.com/*"]
+    }
   ]
 }
