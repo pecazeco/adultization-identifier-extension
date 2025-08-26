@@ -11,7 +11,11 @@
   ],
   "web_accessible_resources": [
     { 
-      "resources": ["images/warning-sign.png"],
+      "resources": [
+        "images/warning-sign.png",
+        "images/checkmark.png",
+        "images/loading.gif"
+      ],
       "matches": ["*://*.instagram.com/*"]
     }
   ]

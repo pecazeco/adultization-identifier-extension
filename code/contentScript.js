@@ -1,26 +1,99 @@
 const checkElement = (img) => {
-  // Seletor para os posts do Instagram.
-  // Pode ser necessário ajustá-lo no futuro se o Instagram mudar sua estrutura.
-  // const postSelector = 'article[role="presentation"], article[role="presentation"] > div:nth-child(2)'; 
-  // const posts = document.querySelectorAll(postSelector);
 
   const imageUrl = img.currentSrc // url da imagem atual
   
-  if (checkIfAdultization(imageUrl)) { // checa se contem conteudo de sexualizacao
-    // Censor
-    censorElement(img);
-  } else {
-    // Not censored -> show that it was checked 
-    showCheck(img);
-  }
-  
+  showAnalysing(img);
+
+  setTimeout(() => {
+    removeAnalysing(img);
+    if (checkIfAdultization(imageUrl)) { // checa se contem conteudo de sexualizacao
+      // Censor
+      showCensored(img);
+    } else {
+      // Not censored -> show that it was checked 
+      showChecked(img);
+    }
+  }, 2000);
+
 };
 
 const checkIfAdultization = (imageURL) => {
-  return true
-}; // retorna sim se é necessário 
 
-const censorElement = (element) => {
+  // on development 
+
+  return false
+};
+
+const showAnalysing = (element) => {
+  const parent = element.parentElement;
+  if (!parent) return;
+
+  // Evita adicionar múltiplos overlays de análise
+  if (parent.querySelector('.analysing-container')) return;
+
+  // Garante que o pai da imagem seja relativo para o posicionamento
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  // Aplica um blur inicial
+  element.style.filter = 'blur(10px)';
+
+  // Cria o container principal para o loading
+  const analysingContainer = document.createElement('div');
+  analysingContainer.className = 'analysing-container'; // Classe para poder remover depois
+  analysingContainer.style.position = 'absolute';
+  analysingContainer.style.top = '0';
+  analysingContainer.style.left = '0';
+  analysingContainer.style.width = '100%';
+  analysingContainer.style.height = '100%';
+  analysingContainer.style.pointerEvents = 'none';
+
+  // Usa Flexbox para centralizar tudo
+  analysingContainer.style.display = 'flex';
+  analysingContainer.style.flexDirection = 'column'; // Organiza os itens em coluna (GIF em cima, texto embaixo)
+  analysingContainer.style.justifyContent = 'center';
+  analysingContainer.style.alignItems = 'center';
+
+  // Cria o GIF de loading
+  const loadingGif = document.createElement('img');
+  loadingGif.src = chrome.runtime.getURL('images/loading.gif'); // Use o nome correto do seu arquivo
+  loadingGif.style.width = '80px'; // Tamanho fixo para o GIF
+  loadingGif.style.height = 'auto';
+  loadingGif.style.filter = 'drop-shadow(0 0 4px #2896ff) drop-shadow(0 0 2px #2896ff)'
+
+  // Cria o texto "Analisando..."
+  const analysingText = document.createElement('div');
+  analysingText.textContent = 'Analisando conteúdo...';
+  analysingText.style.color = 'white';
+  analysingText.style.marginTop = '10px';
+  analysingText.style.fontSize = '1em';
+  analysingText.style.fontWeight = 'bold';
+  analysingText.style.textShadow = '0 0 5px black'; // Sombra para legibilidade
+
+  // Monta o visual de análise
+  analysingContainer.appendChild(loadingGif);
+  analysingContainer.appendChild(analysingText);
+
+  // Adiciona tudo à página
+  parent.appendChild(analysingContainer);
+};
+
+const removeAnalysing = (element) => {
+  const parent = element.parentElement;
+  if (!parent) return;
+  
+  // Remove o blur da imagem principal
+  element.style.filter = '';
+
+  // Encontra e remove o container de análise
+  const analysisOverlay = parent.querySelector('.analysing-container');
+  if (analysisOverlay) {
+    parent.removeChild(analysisOverlay);
+  }
+}
+
+const showCensored = (element) => {
   // Blur na imagem
   element.style.filter = 'blur(20px)';
 
@@ -44,14 +117,13 @@ const censorElement = (element) => {
   alertContainer.style.justifyContent = 'center';
   alertContainer.style.alignItems = 'center';
   alertContainer.style.pointerEvents = 'none';
-  // alertContainer.style.zIndex = '10000';
 
   // Símbolo
   const warningImage = document.createElement('img');
   warningImage.src = chrome.runtime.getURL('images/warning-sign.png');
   warningImage.style.width = '20%';
   warningImage.style.height = 'auto';
-
+  warningImage.style.filter = 'drop-shadow(0 0 10px red)';
   // Texto
   const textContainer = document.createElement('div');
   textContainer.textContent = 'Essa imagem potencialmente sexualiza crianças';
@@ -60,7 +132,7 @@ const censorElement = (element) => {
   textContainer.style.textAlign = 'center';
   textContainer.style.marginTop = '10px';
   textContainer.style.fontSize = '1.2em';
-  textContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+  textContainer.style.backgroundColor = 'rgba(86, 86, 86, 0.5)';
   textContainer.style.padding = '5px 10px';
   textContainer.style.borderRadius = '5px';
 
@@ -70,11 +142,60 @@ const censorElement = (element) => {
   parent.appendChild(alertContainer);
 };
 
-const showCheck = (element) => {};
+const showChecked = (element) => {
+
+  const parent = element.parentElement;
+  if (!parent) return; // Sai se não houver elemento pai
+
+  // Verifica se a caixa já foi adicionada para evitar duplicatas
+  if (parent.querySelector('.checked-box')) {
+    return;
+  }
+  
+  // Garante que o pai da imagem seja relativo para o posicionamento funcionar
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  // Cria o container principal da caixa
+  const checkContainer = document.createElement('div');
+  checkContainer.className = 'checked-box'; // Adiciona uma classe para evitar duplicatas
+  checkContainer.style.position = 'absolute';
+  checkContainer.style.top = '10px';
+  checkContainer.style.right = '10px';
+  checkContainer.style.backgroundColor = 'gray'; 
+  checkContainer.style.opacity = '80%'
+  checkContainer.style.color = 'white';
+  checkContainer.style.padding = '5px 8px';
+  checkContainer.style.borderRadius = '5px';
+  checkContainer.style.fontSize = '12px';
+  checkContainer.style.pointerEvents = 'none';
+
+  // Usa Flexbox para alinhar texto e imagem
+  checkContainer.style.display = 'flex';
+  checkContainer.style.alignItems = 'center';
+
+  // Cria o texto
+  const textSpan = document.createElement('span');
+  textSpan.textContent = 'Imagem sem identificação de crianças sexualizadas';
+  
+  // Cria o símbolo
+  const checkImage = document.createElement('img');
+  checkImage.src = chrome.runtime.getURL('images/checkmark.png'); // Use o nome correto do seu arquivo!
+  checkImage.style.height = '1em'; // Faz a altura da imagem ser igual à altura da fonte
+  checkImage.style.width = 'auto';
+  checkImage.style.marginRight = '5px'; // Espaçamento entre o texto e o símbolo
+
+  // Monta a caixa
+  checkContainer.appendChild(checkImage);
+  checkContainer.appendChild(textSpan);
+  
+  // Adiciona a caixa ao pai da imagem original
+  parent.appendChild(checkContainer);
+};
 
 // Executa a função imediatamente para desfocar os posts que já estão na página.
 const initialElements = [...document.querySelectorAll('img[alt^="Photo by"]'), ...document.querySelectorAll('img[alt^="Photo shared by"]')];
-
 initialElements.forEach(element => {
   checkElement(element);
 }); 
@@ -98,12 +219,10 @@ const observer = new MutationObserver((mutations) => {
     }
   });
 });
-
 // Configuração do observador: monitorar mudanças na lista de filhos do corpo da página.
 const observerConfig = {
   childList: true,
   subtree: true
 };
-
 // Inicia o observador.
 observer.observe(document.body, observerConfig);
